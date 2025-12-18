@@ -1,820 +1,850 @@
-import React, { useState, useEffect } from 'react';
-import { BookOpen, Award, User, LogOut, Menu, X, ChevronRight, Star, Trophy, CheckCircle } from 'lucide-react';
-
-const FrenchHelpSite = () => {
-  const [currentPage, setCurrentPage] = useState('home');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState('login');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [currentUser, setCurrentUser] = useState(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  // Charger les données utilisateur au démarrage
-  useEffect(() => {
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      const user = JSON.parse(savedUser);
-      setCurrentUser(user);
-      setIsLoggedIn(true);
-    }
-  }, []);
-
-  // Sauvegarder l'utilisateur
-  const saveUser = (user) => {
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const index = users.findIndex(u => u.username === user.username);
-    if (index >= 0) {
-      users[index] = user;
-    } else {
-      users.push(user);
-    }
-    localStorage.setItem('users', JSON.stringify(users));
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    setCurrentUser(user);
-  };
-
-  // Système de rangs
-  const getRank = (points) => {
-    if (points < 100) return { name: 'Débutant', icon: '🌱' };
-    if (points < 300) return { name: 'Apprenti', icon: '📚' };
-    if (points < 600) return { name: 'Collégien motivé', icon: '⭐' };
-    if (points < 1000) return { name: 'Expert 3e', icon: '🏆' };
-    return { name: 'Prêt pour le brevet', icon: '🎓' };
-  };
-
-  // Authentification
-  const handleAuth = () => {
-    if (authMode === 'login') {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const user = users.find(u => u.username === username && u.password === password);
-      if (user) {
-        setIsLoggedIn(true);
-        setCurrentUser(user);
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        setShowAuthModal(false);
-        setUsername('');
-        setPassword('');
-      } else {
-        alert('Nom d\'utilisateur ou mot de passe incorrect');
-      }
-    } else {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      if (users.find(u => u.username === username)) {
-        alert('Ce nom d\'utilisateur existe déjà');
-        return;
-      }
-      const newUser = { username, password, points: 0, completedExercises: [] };
-      saveUser(newUser);
-      setIsLoggedIn(true);
-      setShowAuthModal(false);
-      setUsername('');
-      setPassword('');
-    }
-  };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setCurrentUser(null);
-    localStorage.removeItem('currentUser');
-    setCurrentPage('home');
-  };
-
-  const addPoints = (points) => {
-    if (currentUser) {
-      const updatedUser = { ...currentUser, points: currentUser.points + points };
-      saveUser(updatedUser);
-    }
-  };
-
-  // Pages de contenu
-  const GrammarPage = () => {
-    const [selectedLesson, setSelectedLesson] = useState(null);
-    const [exerciseAnswers, setExerciseAnswers] = useState({});
-
-    const lessons = [
-      {
-        id: 1,
-        title: 'Les classes de mots',
-        content: 'Les mots de la langue française se classent en 9 catégories principales.',
-        rule: 'Il existe des mots variables (qui changent) et invariables (qui ne changent pas).',
-        example: '• Nom : chien, maison\n• Verbe : manger, courir\n• Adjectif : beau, grand\n• Adverbe : rapidement, très',
-        exercise: {
-          question: 'Dans la phrase "Le chat noir mange rapidement", identifie la classe de chaque mot.',
-          answer: 'Le = déterminant, chat = nom, noir = adjectif, mange = verbe, rapidement = adverbe',
-          points: 10
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Français 3e - Ton aide pour réussir</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-      },
-      {
-        id: 2,
-        title: 'Les fonctions grammaticales',
-        content: 'La fonction d\'un mot indique son rôle dans la phrase.',
-        rule: 'Pour trouver le sujet, pose la question "Qui est-ce qui ?" ou "Qu\'est-ce qui ?" avant le verbe.',
-        example: 'Dans "Marie mange une pomme" :\n• Marie = sujet (qui mange ?)\n• une pomme = complément d\'objet direct (mange quoi ?)',
-        exercise: {
-          question: 'Trouve le sujet dans : "Les élèves travaillent sérieusement."',
-          answer: 'Les élèves',
-          points: 10
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f3e8ff 50%, #fce7f3 100%);
+            min-height: 100vh;
         }
-      },
-      {
-        id: 3,
-        title: 'Les accords',
-        content: 'Les accords permettent de relier les mots entre eux correctement.',
-        rule: 'Le verbe s\'accorde avec son sujet. L\'adjectif s\'accorde avec le nom qu\'il qualifie.',
-        example: '• Les filles sont contentes (féminin pluriel)\n• Le garçon est content (masculin singulier)',
-        exercise: {
-          question: 'Accorde correctement : "Les fleurs (être) beau."',
-          answer: 'Les fleurs sont belles',
-          points: 15
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
-      }
-    ];
 
-    const checkAnswer = (lessonId, userAnswer) => {
-      const lesson = lessons.find(l => l.id === lessonId);
-      const isCorrect = userAnswer.toLowerCase().trim() === lesson.exercise.answer.toLowerCase().trim();
-      
-      if (isCorrect && currentUser) {
-        addPoints(lesson.exercise.points);
-        alert(`Bravo ! Tu gagnes ${lesson.exercise.points} points ! 🎉`);
-      } else if (!isCorrect) {
-        alert(`Pas tout à fait. La réponse était : ${lesson.exercise.answer}`);
-      }
-      
-      setExerciseAnswers({ ...exerciseAnswers, [lessonId]: '' });
-    };
-
-    if (selectedLesson) {
-      const lesson = lessons.find(l => l.id === selectedLesson);
-      return (
-        <div className="max-w-3xl mx-auto">
-          <button onClick={() => setSelectedLesson(null)} className="mb-4 text-blue-600 hover:underline">
-            ← Retour aux leçons
-          </button>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">{lesson.title}</h2>
-            
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">📖 Explication</h3>
-              <p className="text-gray-600">{lesson.content}</p>
-            </div>
-
-            <div className="mb-6 bg-blue-50 p-4 rounded">
-              <h3 className="text-lg font-semibold text-blue-800 mb-2">📝 Règle à retenir</h3>
-              <p className="text-gray-700">{lesson.rule}</p>
-            </div>
-
-            <div className="mb-6 bg-green-50 p-4 rounded">
-              <h3 className="text-lg font-semibold text-green-800 mb-2">💡 Exemples</h3>
-              <pre className="text-gray-700 whitespace-pre-wrap">{lesson.example}</pre>
-            </div>
-
-            <div className="bg-yellow-50 p-4 rounded">
-              <h3 className="text-lg font-semibold text-yellow-800 mb-3">✏️ Exercice ({lesson.exercise.points} points)</h3>
-              <p className="text-gray-700 mb-3">{lesson.exercise.question}</p>
-              <input
-                type="text"
-                value={exerciseAnswers[lesson.id] || ''}
-                onChange={(e) => setExerciseAnswers({ ...exerciseAnswers, [lesson.id]: e.target.value })}
-                className="w-full p-2 border rounded mb-2"
-                placeholder="Ta réponse..."
-              />
-              <button
-                onClick={() => checkAnswer(lesson.id, exerciseAnswers[lesson.id])}
-                className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
-              >
-                Vérifier
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">📚 Grammaire</h1>
-        <p className="text-gray-600 mb-8">Apprends les bases de la grammaire française pas à pas.</p>
-        
-        <div className="grid gap-4">
-          {lessons.map(lesson => (
-            <div key={lesson.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer" onClick={() => setSelectedLesson(lesson.id)}>
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-semibold text-gray-800">{lesson.title}</h3>
-                <ChevronRight className="text-blue-600" />
-              </div>
-              <p className="text-gray-600 mt-2">{lesson.content}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  const ConjugationPage = () => (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">⏰ Conjugaison</h1>
-      <p className="text-gray-600 mb-8">Maîtrise les temps verbaux essentiels pour le brevet.</p>
-      
-      <div className="grid gap-6">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">Le présent</h3>
-          <p className="text-gray-600 mb-3">Utilise le présent pour parler de maintenant ou d'une vérité générale.</p>
-          <div className="bg-blue-50 p-4 rounded">
-            <p className="font-semibold mb-2">Exemple : verbe MANGER</p>
-            <p>Je mange, tu manges, il/elle mange</p>
-            <p>Nous mangeons, vous mangez, ils/elles mangent</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">L'imparfait</h3>
-          <p className="text-gray-600 mb-3">Utilise l'imparfait pour parler d'une action du passé qui durait.</p>
-          <div className="bg-green-50 p-4 rounded">
-            <p className="font-semibold mb-2">Exemple : verbe ÊTRE</p>
-            <p>J'étais, tu étais, il/elle était</p>
-            <p>Nous étions, vous étiez, ils/elles étaient</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">Le passé composé</h3>
-          <p className="text-gray-600 mb-3">Utilise le passé composé pour parler d'une action terminée du passé.</p>
-          <div className="bg-yellow-50 p-4 rounded">
-            <p className="font-semibold mb-2">Exemple : verbe ALLER</p>
-            <p>Je suis allé(e), tu es allé(e), il/elle est allé(e)</p>
-            <p>Nous sommes allé(e)s, vous êtes allé(e)s, ils/elles sont allé(e)s</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">Le futur simple</h3>
-          <p className="text-gray-600 mb-3">Utilise le futur pour parler de ce qui va arriver.</p>
-          <div className="bg-purple-50 p-4 rounded">
-            <p className="font-semibold mb-2">Exemple : verbe AVOIR</p>
-            <p>J'aurai, tu auras, il/elle aura</p>
-            <p>Nous aurons, vous aurez, ils/elles auront</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const OrthographyPage = () => (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">✍️ Orthographe</h1>
-      <p className="text-gray-600 mb-8">Évite les fautes les plus courantes avec ces astuces simples.</p>
-      
-      <div className="grid gap-6">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">a / à</h3>
-          <div className="space-y-2 text-gray-700">
-            <p><strong>a</strong> = verbe avoir (tu peux le remplacer par "avait")</p>
-            <p className="bg-blue-50 p-2 rounded">Ex : Il <u>a</u> un chat → Il avait un chat ✓</p>
-            <p><strong>à</strong> = préposition (ne change jamais)</p>
-            <p className="bg-blue-50 p-2 rounded">Ex : Je vais <u>à</u> l'école → Je vais avait l'école ✗</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">et / est</h3>
-          <div className="space-y-2 text-gray-700">
-            <p><strong>et</strong> = mot de liaison (tu peux le remplacer par "et puis")</p>
-            <p className="bg-green-50 p-2 rounded">Ex : Paul <u>et</u> Marie → Paul et puis Marie ✓</p>
-            <p><strong>est</strong> = verbe être (tu peux le remplacer par "était")</p>
-            <p className="bg-green-50 p-2 rounded">Ex : Il <u>est</u> gentil → Il était gentil ✓</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">son / sont</h3>
-          <div className="space-y-2 text-gray-700">
-            <p><strong>son</strong> = déterminant possessif (tu peux le remplacer par "mon")</p>
-            <p className="bg-yellow-50 p-2 rounded">Ex : <u>Son</u> livre → Mon livre ✓</p>
-            <p><strong>sont</strong> = verbe être (tu peux le remplacer par "étaient")</p>
-            <p className="bg-yellow-50 p-2 rounded">Ex : Ils <u>sont</u> là → Ils étaient là ✓</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">L'accord du participe passé</h3>
-          <div className="space-y-2 text-gray-700">
-            <p><strong>Avec être :</strong> le participe s'accorde avec le sujet</p>
-            <p className="bg-purple-50 p-2 rounded">Ex : Elles sont <u>allées</u> (féminin pluriel)</p>
-            <p><strong>Avec avoir :</strong> le participe ne s'accorde pas (sauf cas particulier)</p>
-            <p className="bg-purple-50 p-2 rounded">Ex : Elles ont <u>mangé</u> (pas d'accord)</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const BrevetPage = () => (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">🎯 Méthode Brevet</h1>
-      <p className="text-gray-600 mb-8">Prépare-toi efficacement pour réussir l'épreuve de français du brevet.</p>
-      
-      <div className="grid gap-6">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">1. Répondre aux questions de compréhension</h3>
-          <ul className="space-y-2 text-gray-700">
-            <li className="flex items-start">
-              <CheckCircle className="text-green-600 mr-2 mt-1 flex-shrink-0" size={20} />
-              <span>Lis bien la question et souligne les mots importants</span>
-            </li>
-            <li className="flex items-start">
-              <CheckCircle className="text-green-600 mr-2 mt-1 flex-shrink-0" size={20} />
-              <span>Cherche la réponse dans le texte</span>
-            </li>
-            <li className="flex items-start">
-              <CheckCircle className="text-green-600 mr-2 mt-1 flex-shrink-0" size={20} />
-              <span>Cite le texte entre guillemets si nécessaire</span>
-            </li>
-            <li className="flex items-start">
-              <CheckCircle className="text-green-600 mr-2 mt-1 flex-shrink-0" size={20} />
-              <span>Rédige une phrase complète avec sujet + verbe</span>
-            </li>
-          </ul>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">2. Écrire un paragraphe clair</h3>
-          <div className="bg-blue-50 p-4 rounded space-y-2 text-gray-700">
-            <p><strong>Structure :</strong></p>
-            <p>• 1 idée principale par paragraphe</p>
-            <p>• 1 phrase d'introduction</p>
-            <p>• 2-3 phrases qui développent</p>
-            <p>• 1 phrase de conclusion</p>
-            <p className="mt-3"><strong>Astuce :</strong> Fais des phrases courtes et simples pour éviter les fautes !</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">3. La rédaction (sujet d'invention ou de réflexion)</h3>
-          <div className="space-y-3">
-            <div className="bg-green-50 p-4 rounded">
-              <p className="font-semibold text-gray-800 mb-2">Avant d'écrire :</p>
-              <p className="text-gray-700">• Lis bien la consigne</p>
-              <p className="text-gray-700">• Fais un plan au brouillon (introduction, 2-3 parties, conclusion)</p>
-              <p className="text-gray-700">• Note tes idées principales</p>
-            </div>
-            <div className="bg-yellow-50 p-4 rounded">
-              <p className="font-semibold text-gray-800 mb-2">En écrivant :</p>
-              <p className="text-gray-700">• Saute des lignes entre les parties</p>
-              <p className="text-gray-700">• Vérifie tes accords (sujet-verbe, nom-adjectif)</p>
-              <p className="text-gray-700">• Relis-toi à la fin !</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">4. Gestion du temps</h3>
-          <div className="bg-purple-50 p-4 rounded">
-            <p className="text-gray-700 mb-2"><strong>Durée totale : 3h</strong></p>
-            <p className="text-gray-700">• Questions de compréhension : 1h</p>
-            <p className="text-gray-700">• Dictée : 20 min</p>
-            <p className="text-gray-700">• Réécriture : 15 min</p>
-            <p className="text-gray-700">• Rédaction : 1h15</p>
-            <p className="text-gray-700 mt-2"><strong>Garde 10 min pour te relire !</strong></p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const DicteePage = () => {
-    const [currentDictation, setCurrentDictation] = useState(null);
-    const [userText, setUserText] = useState('');
-    const [showCorrection, setShowCorrection] = useState(false);
-
-    const dictations = [
-      {
-        id: 1,
-        title: 'Dictée 1 - Niveau facile',
-        text: 'Le chat noir dort sur le canapé. Il est très fatigué.',
-        audio: '🔊 Audio disponible',
-        points: 20
-      },
-      {
-        id: 2,
-        title: 'Dictée 2 - Niveau moyen',
-        text: 'Les enfants jouent dans le jardin. Ils sont contents et rient beaucoup.',
-        audio: '🔊 Audio disponible',
-        points: 30
-      }
-    ];
-
-    const checkDictation = () => {
-      const dictation = dictations.find(d => d.id === currentDictation);
-      const correctText = dictation.text.toLowerCase().trim();
-      const userTextClean = userText.toLowerCase().trim();
-      
-      const similarity = userTextClean === correctText ? 100 : 
-        Math.round((1 - (levenshteinDistance(correctText, userTextClean) / Math.max(correctText.length, userTextClean.length))) * 100);
-      
-      if (similarity >= 90 && currentUser) {
-        addPoints(dictation.points);
-        alert(`Excellent ! Tu gagnes ${dictation.points} points ! 🎉`);
-      } else if (similarity >= 70) {
-        alert(`Bien ! Quelques petites erreurs. Continue comme ça !`);
-      }
-      
-      setShowCorrection(true);
-    };
-
-    const levenshteinDistance = (a, b) => {
-      const matrix = [];
-      for (let i = 0; i <= b.length; i++) {
-        matrix[i] = [i];
-      }
-      for (let j = 0; j <= a.length; j++) {
-        matrix[0][j] = j;
-      }
-      for (let i = 1; i <= b.length; i++) {
-        for (let j = 1; j <= a.length; j++) {
-          if (b.charAt(i - 1) === a.charAt(j - 1)) {
-            matrix[i][j] = matrix[i - 1][j - 1];
-          } else {
-            matrix[i][j] = Math.min(
-              matrix[i - 1][j - 1] + 1,
-              matrix[i][j - 1] + 1,
-              matrix[i - 1][j] + 1
-            );
-          }
+        /* Header */
+        header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
-      }
-      return matrix[b.length][a.length];
-    };
 
-    if (currentDictation) {
-      const dictation = dictations.find(d => d.id === currentDictation);
-      return (
-        <div className="max-w-3xl mx-auto">
-          <button onClick={() => { setCurrentDictation(null); setUserText(''); setShowCorrection(false); }} className="mb-4 text-blue-600 hover:underline">
-            ← Retour aux dictées
-          </button>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">{dictation.title}</h2>
-            <p className="text-gray-600 mb-4">{dictation.audio}</p>
-            <p className="text-sm text-gray-500 mb-6">💡 Astuce : Cette version n'a pas d'audio réel. Lis le texte ci-dessous, cache-le, puis essaie de l'écrire de mémoire !</p>
-            
-            <div className="bg-blue-50 p-4 rounded mb-6">
-              <p className="text-gray-700 font-mono">{dictation.text}</p>
-            </div>
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+        }
 
-            <textarea
-              value={userText}
-              onChange={(e) => setUserText(e.target.value)}
-              className="w-full h-32 p-3 border rounded mb-4"
-              placeholder="Écris la dictée ici..."
-            />
+        .logo {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
 
-            <button
-              onClick={checkDictation}
-              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 mb-4"
-            >
-              Vérifier ma dictée
-            </button>
+        .logo-icon {
+            font-size: 32px;
+            margin-right: 10px;
+        }
 
-            {showCorrection && (
-              <div className="bg-green-50 p-4 rounded">
-                <h3 className="font-semibold text-green-800 mb-2">✅ Texte correct :</h3>
-                <p className="text-gray-700 mb-3">{dictation.text}</p>
-                <h3 className="font-semibold text-green-800 mb-2">📝 Ta version :</h3>
-                <p className="text-gray-700">{userText}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
+        .logo-text h1 {
+            font-size: 24px;
+            color: #1e40af;
+        }
 
-    return (
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">🎧 Dictées interactives</h1>
-        <p className="text-gray-600 mb-8">Entraîne-toi avec des dictées progressives pour améliorer ton orthographe.</p>
-        
-        <div className="grid gap-4">
-          {dictations.map(dictation => (
-            <div key={dictation.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer" onClick={() => setCurrentDictation(dictation.id)}>
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800">{dictation.title}</h3>
-                  <p className="text-gray-600 mt-2">{dictation.audio}</p>
-                  <p className="text-sm text-blue-600 mt-1">Récompense : {dictation.points} points</p>
+        .logo-text p {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        nav {
+            display: flex;
+            gap: 20px;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            color: #374151;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 8px 12px;
+            transition: color 0.3s;
+        }
+
+        nav button:hover {
+            color: #2563eb;
+        }
+
+        .auth-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: #059669;
+        }
+
+        .user-badge {
+            background: #2563eb;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 8px;
+        }
+
+        /* Main Content */
+        main {
+            padding: 40px 20px;
+            min-height: calc(100vh - 200px);
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Home Page */
+        .hero {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .hero h1 {
+            font-size: 42px;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+
+        .hero .subtitle {
+            font-size: 24px;
+            color: #4b5563;
+            margin-bottom: 12px;
+        }
+
+        .hero .description {
+            color: #6b7280;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .mission-box {
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 16px;
+            margin-bottom: 60px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .mission-box h2 {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .mission-box .tagline {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .mission-box ul {
+            list-style: none;
+        }
+
+        .mission-box li {
+            margin: 10px 0;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .mission-box li::before {
+            content: "✓";
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .card.grammar:hover { border-color: #2563eb; }
+        .card.conjugation:hover { border-color: #10b981; }
+        .card.orthography:hover { border-color: #f59e0b; }
+        .card.brevet:hover { border-color: #8b5cf6; }
+        .card.dictee:hover { border-color: #ef4444; }
+        .card.profile:hover { border-color: #ec4899; }
+
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .card h3 {
+            font-size: 22px;
+            color: #1f2937;
+            margin-bottom: 12px;
+        }
+
+        .card p {
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .tip-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 40px;
+        }
+
+        .tip-box strong {
+            color: #92400e;
+        }
+
+        /* Lesson Page */
+        .lesson-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .lesson-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .lesson-card:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .lesson-card h3 {
+            font-size: 20px;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .lesson-detail {
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: #2563eb;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-decoration: underline;
+        }
+
+        .lesson-section {
+            margin-bottom: 24px;
+        }
+
+        .lesson-section h3 {
+            font-size: 18px;
+            color: #1f2937;
+            margin-bottom: 12px;
+        }
+
+        .rule-box {
+            background: #dbeafe;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .example-box {
+            background: #d1fae5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+        }
+
+        .exercise-box {
+            background: #fef3c7;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .exercise-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            margin: 12px 0;
+            font-size: 16px;
+        }
+
+        /* Profile Page */
+        .profile-header {
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+        }
+
+        .profile-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .profile-top h2 {
+            font-size: 32px;
+            color: #1f2937;
+        }
+
+        .rank-icon {
+            font-size: 64px;
+        }
+
+        .rank-card {
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            color: white;
+            padding: 32px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .rank-card h3 {
+            font-size: 36px;
+            margin-top: 8px;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.3);
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+
+        .progress-fill {
+            background: white;
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-card .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .stat-card .label {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .ranks-list {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .rank-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            margin: 8px 0;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+
+        .rank-item.current {
+            background: #dbeafe;
+            border: 2px solid #2563eb;
+        }
+
+        .rank-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .rank-info .icon {
+            font-size: 32px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h2 {
+            font-size: 24px;
+            color: #1f2937;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .link-btn {
+            background: none;
+            border: none;
+            color: #2563eb;
+            cursor: pointer;
+            text-decoration: underline;
+            width: 100%;
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        /* Footer */
+        footer {
+            background: #1f2937;
+            color: white;
+            text-align: center;
+            padding: 32px 20px;
+            margin-top: 60px;
+        }
+
+        footer p {
+            margin: 8px 0;
+        }
+
+        .footer-small {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo" onclick="showPage('home')">
+                    <div class="logo-icon">📚</div>
+                    <div class="logo-text">
+                        <h1>Français 3e</h1>
+                        <p>Ton aide pour réussir</p>
+                    </div>
                 </div>
-                <ChevronRight className="text-blue-600" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
 
-  const ProfilePage = () => {
-    if (!isLoggedIn) {
-      return (
-        <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">👤 Mon profil</h1>
-          <p className="text-gray-600 mb-6">Connecte-toi pour suivre ta progression !</p>
-          <button onClick={() => setShowAuthModal(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
-            Se connecter
-          </button>
-        </div>
-      );
-    }
+                <nav>
+                    <button onclick="showPage('home')">Accueil</button>
+                    <button onclick="showPage('grammar')">Grammaire</button>
+                    <button onclick="showPage('conjugation')">Conjugaison</button>
+                    <button onclick="showPage('orthography')">Orthographe</button>
+                    <button onclick="showPage('brevet')">Brevet</button>
+                    <button onclick="showPage('dictee')">Dictées</button>
+                </nav>
 
-    const rank = getRank(currentUser.points);
-
-    return (
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">👤 Mon profil</h1>
-        
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800">{currentUser.username}</h2>
-              <p className="text-gray-600">Membre actif</p>
-            </div>
-            <div className="text-5xl">{rank.icon}</div>
-          </div>
-
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg p-6 mb-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm opacity-90">Ton rang</p>
-                <p className="text-3xl font-bold">{rank.name}</p>
-              </div>
-              <Trophy size={48} />
-            </div>
-            <div className="mt-4">
-              <div className="flex justify-between text-sm mb-2">
-                <span>Progression</span>
-                <span>{currentUser.points} points</span>
-              </div>
-              <div className="bg-white bg-opacity-30 rounded-full h-3">
-                <div 
-                  className="bg-white rounded-full h-3 transition-all duration-300"
-                  style={{ width: `${Math.min((currentUser.points % 100) || 100, 100)}%` }}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="bg-blue-50 rounded-lg p-4">
-              <Star className="mx-auto text-yellow-500 mb-2" size={32} />
-              <p className="text-2xl font-bold text-gray-800">{currentUser.points}</p>
-              <p className="text-sm text-gray-600">Points totaux</p>
-            </div>
-            <div className="bg-green-50 rounded-lg p-4">
-              <CheckCircle className="mx-auto text-green-500 mb-2" size={32} />
-              <p className="text-2xl font-bold text-gray-800">{currentUser.completedExercises?.length || 0}</p>
-              <p className="text-sm text-gray-600">Exercices réussis</p>
-            </div>
-            <div className="bg-purple-50 rounded-lg p-4">
-              <Trophy className="mx-auto text-purple-500 mb-2" size={32} />
-              <p className="text-2xl font-bold text-gray-800">{rank.name}</p>
-              <p className="text-sm text-gray-600">Rang actuel</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">🏆 Tous les rangs</h3>
-          <div className="space-y-3">
-            {[
-              { name: 'Débutant', icon: '🌱', points: '0-99 points' },
-              { name: 'Apprenti', icon: '📚', points: '100-299 points' },
-              { name: 'Collégien motivé', icon: '⭐', points: '300-599 points' },
-              { name: 'Expert 3e', icon: '🏆', points: '600-999 points' },
-              { name: 'Prêt pour le brevet', icon: '🎓', points: '1000+ points' }
-            ].map(r => (
-              <div key={r.name} className={`flex items-center justify-between p-3 rounded ${r.name === rank.name ? 'bg-blue-100 border-2 border-blue-500' : 'bg-gray-50'}`}>
-                <div className="flex items-center">
-                  <span className="text-2xl mr-3">{r.icon}</span>
-                  <div>
-                    <p className="font-semibold text-gray-800">{r.name}</p>
-                    <p className="text-sm text-gray-600">{r.points}</p>
-                  </div>
+                <div class="auth-section">
+                    <div id="loggedOut">
+                        <button class="btn-primary" onclick="showAuthModal('login')">Connexion</button>
+                    </div>
+                    <div id="loggedIn" class="hidden">
+                        <div class="user-badge" onclick="showPage('profile')">
+                            <span>👤</span>
+                            <span id="username"></span>
+                        </div>
+                        <button class="logout-btn" onclick="logout()">🚪</button>
+                    </div>
                 </div>
-                {r.name === rank.name && <span className="text-blue-600 font-semibold">Ton rang actuel</span>}
-              </div>
-            ))}
-          </div>
+            </div>
         </div>
-      </div>
-    );
-  };
+    </header>
 
-  const HomePage = () => (
-    <div className="max-w-4xl mx-auto">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">Bienvenue sur ton site d'aide en français ! 📚</h1>
-        <p className="text-xl text-gray-600 mb-3">Spécialement conçu pour les élèves de 3e</p>
-        <p className="text-gray-600 max-w-2xl mx-auto">
-          Tu as des difficultés en français ? Pas de panique ! Ce site est là pour t'aider à comprendre les bases, 
-          progresser à ton rythme et te préparer sereinement au brevet. 💪
-        </p>
-      </div>
-
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg p-8 mb-12 shadow-lg">
-        <h2 className="text-2xl font-bold mb-3">🎯 Notre objectif</h2>
-        <p className="text-lg mb-4">T'aider à reprendre confiance et à réussir en français !</p>
-        <ul className="space-y-2">
-          <li className="flex items-center"><CheckCircle className="mr-2" size={20} /> Explications simples et claires</li>
-          <li className="flex items-center"><CheckCircle className="mr-2" size={20} /> Exercices progressifs avec corrections</li>
-          <li className="flex items-center"><CheckCircle className="mr-2" size={20} /> Système de points et de rangs motivant</li>
-          <li className="flex items-center"><CheckCircle className="mr-2" size={20} /> Préparation au brevet pas à pas</li>
-        </ul>
-      </div>
-
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">📖 Explore les différentes sections</h2>
-      
-      <div className="grid md:grid-cols-2 gap-6">
-        <div onClick={() => setCurrentPage('grammar')} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer border-2 border-transparent hover:border-blue-500">
-          <div className="text-4xl mb-3">📚</div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Grammaire</h3>
-          <p className="text-gray-600">Classes de mots, fonctions, accords... Tout est expliqué simplement !</p>
-        </div>
-
-        <div onClick={() => setCurrentPage('conjugation')} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer border-2 border-transparent hover:border-green-500">
-          <div className="text-4xl mb-3">⏰</div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Conjugaison</h3>
-          <p className="text-gray-600">Maîtrise les temps essentiels : présent, imparfait, passé composé, futur.</p>
-        </div>
-
-        <div onClick={() => setCurrentPage('orthography')} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer border-2 border-transparent hover:border-yellow-500">
-          <div className="text-4xl mb-3">✍️</div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Orthographe</h3>
-          <p className="text-gray-600">Évite les fautes courantes avec des astuces faciles à retenir !</p>
-        </div>
-
-        <div onClick={() => setCurrentPage('brevet')} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer border-2 border-transparent hover:border-purple-500">
-          <div className="text-4xl mb-3">🎯</div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Méthode Brevet</h3>
-          <p className="text-gray-600">Prépare-toi efficacement avec nos méthodes et conseils pratiques.</p>
-        </div>
-
-        <div onClick={() => setCurrentPage('dictee')} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer border-2 border-transparent hover:border-red-500">
-          <div className="text-4xl mb-3">🎧</div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Dictées interactives</h3>
-          <p className="text-gray-600">Entraîne-toi avec des dictées progressives et gagne des points !</p>
-        </div>
-
-        <div onClick={() => setCurrentPage('profile')} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer border-2 border-transparent hover:border-pink-500">
-          <div className="text-4xl mb-3">👤</div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Mon profil</h3>
-          <p className="text-gray-600">Suis ta progression, tes points et ton rang !</p>
-        </div>
-      </div>
-
-      <div className="mt-12 bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded">
-        <p className="text-gray-700">
-          <strong>💡 Conseil :</strong> Crée ton compte pour sauvegarder ta progression et gagner des points ! 
-          Plus tu travailles, plus tu grimpes dans les rangs ! 🏆
-        </p>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      {/* Header */}
-      <header className="bg-white shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center cursor-pointer" onClick={() => setCurrentPage('home')}>
-              <BookOpen className="text-blue-600 mr-2" size={32} />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800">Français 3e</h1>
-                <p className="text-sm text-gray-600">Ton aide pour réussir</p>
-              </div>
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Home Page -->
+        <div id="home" class="page active">
+            <div class="hero">
+                <h1>Bienvenue sur ton site d'aide en français ! 📚</h1>
+                <p class="subtitle">Spécialement conçu pour les élèves de 3e</p>
+                <p class="description">
+                    Tu as des difficultés en français ? Pas de panique ! Ce site est là pour t'aider à comprendre les bases, 
+                    progresser à ton rythme et te préparer sereinement au brevet. 💪
+                </p>
             </div>
 
-            <div className="hidden md:flex items-center space-x-6">
-              <button onClick={() => setCurrentPage('home')} className="text-gray-700 hover:text-blue-600 transition">Accueil</button>
-              <button onClick={() => setCurrentPage('grammar')} className="text-gray-700 hover:text-blue-600 transition">Grammaire</button>
-              <button onClick={() => setCurrentPage('conjugation')} className="text-gray-700 hover:text-blue-600 transition">Conjugaison</button>
-              <button onClick={() => setCurrentPage('orthography')} className="text-gray-700 hover:text-blue-600 transition">Orthographe</button>
-              <button onClick={() => setCurrentPage('brevet')} className="text-gray-700 hover:text-blue-600 transition">Brevet</button>
-              <button onClick={() => setCurrentPage('dictee')} className="text-gray-700 hover:text-blue-600 transition">Dictées</button>
+            <div class="mission-box">
+                <h2>🎯 Notre objectif</h2>
+                <p class="tagline">T'aider à reprendre confiance et à réussir en français !</p>
+                <ul>
+                    <li>Explications simples et claires</li>
+                    <li>Exercices progressifs avec corrections</li>
+                    <li>Système de points et de rangs motivant</li>
+                    <li>Préparation au brevet pas à pas</li>
+                </ul>
             </div>
 
-            <div className="flex items-center space-x-4">
-              {isLoggedIn ? (
-                <>
-                  <button onClick={() => setCurrentPage('profile')} className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                    <User size={20} />
-                    <span className="hidden md:inline">{currentUser.username}</span>
-                  </button>
-                  <button onClick={handleLogout} className="text-gray-700 hover:text-red-600 transition">
-                    <LogOut size={24} />
-                  </button>
-                </>
-              ) : (
-                <button onClick={() => setShowAuthModal(true)} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-                  Connexion
-                </button>
-              )}
-              <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden">
-                {menuOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            </div>
-          </div>
+            <h2 style="text-align: center; margin-bottom: 40px; font-size: 28px; color: #1f2937;">📖 Explore les différentes sections</h2>
 
-          {/* Mobile menu */}
-          {menuOpen && (
-            <div className="md:hidden mt-4 pb-4 space-y-2">
-              <button onClick={() => { setCurrentPage('home'); setMenuOpen(false); }} className="block w-full text-left py-2 text-gray-700 hover:text-blue-600">Accueil</button>
-              <button onClick={() => { setCurrentPage('grammar'); setMenuOpen(false); }} className="block w-full text-left py-2 text-gray-700 hover:text-blue-600">Grammaire</button>
-              <button onClick={() => { setCurrentPage('conjugation'); setMenuOpen(false); }} className="block w-full text-left py-2 text-gray-700 hover:text-blue-600">Conjugaison</button>
-              <button onClick={() => { setCurrentPage('orthography'); setMenuOpen(false); }} className="block w-full text-left py-2 text-gray-700 hover:text-blue-600">Orthographe</button>
-              <button onClick={() => { setCurrentPage('brevet'); setMenuOpen(false); }} className="block w-full text-left py-2 text-gray-700 hover:text-blue-600">Brevet</button>
-              <button onClick={() => { setCurrentPage('dictee'); setMenuOpen(false); }} className="block w-full text-left py-2 text-gray-700 hover:text-blue-600">Dictées</button>
+            <div class="cards-grid">
+                <div class="card grammar" onclick="showPage('grammar')">
+                    <div class="card-icon">📚</div>
+                    <h3>Grammaire</h3>
+                    <p>Classes de mots, fonctions, accords... Tout est expliqué simplement !</p>
+                </div>
+
+                <div class="card conjugation" onclick="showPage('conjugation')">
+                    <div class="card-icon">⏰</div>
+                    <h3>Conjugaison</h3>
+                    <p>Maîtrise les temps essentiels : présent, imparfait, passé composé, futur.</p>
+                </div>
+
+                <div class="card orthography" onclick="showPage('orthography')">
+                    <div class="card-icon">✍️</div>
+                    <h3>Orthographe</h3>
+                    <p>Évite les fautes courantes avec des astuces faciles à retenir !</p>
+                </div>
+
+                <div class="card brevet" onclick="showPage('brevet')">
+                    <div class="card-icon">🎯</div>
+                    <h3>Méthode Brevet</h3>
+                    <p>Prépare-toi efficacement avec nos méthodes et conseils pratiques.</p>
+                </div>
+
+                <div class="card dictee" onclick="showPage('dictee')">
+                    <div class="card-icon">🎧</div>
+                    <h3>Dictées interactives</h3>
+                    <p>Entraîne-toi avec des dictées progressives et gagne des points !</p>
+                </div>
+
+                <div class="card profile" onclick="showPage('profile')">
+                    <div class="card-icon">👤</div>
+                    <h3>Mon profil</h3>
+                    <p>Suis ta progression, tes points et ton rang !</p>
+                </div>
             </div>
-          )}
+
+            <div class="tip-box">
+                <p><strong>💡 Conseil :</strong> Crée ton compte pour sauvegarder ta progression et gagner des points ! 
+                Plus tu travailles, plus tu grimpes dans les rangs ! 🏆</p>
+            </div>
         </div>
-      </header>
 
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {currentPage === 'home' && <HomePage />}
-        {currentPage === 'grammar' && <GrammarPage />}
-        {currentPage === 'conjugation' && <ConjugationPage />}
-        {currentPage === 'orthography' && <OrthographyPage />}
-        {currentPage === 'brevet' && <BrevetPage />}
-        {currentPage === 'dictee' && <DicteePage />}
-        {currentPage === 'profile' && <ProfilePage />}
-      </main>
+        <!-- Grammar Page -->
+        <div id="grammar" class="page">
+            <div id="grammarList">
+                <h1 style="font-size: 36px; margin-bottom: 24px;">📚 Grammaire</h1>
+                <p style="color: #6b7280; margin-bottom: 32px;">Apprends les bases de la grammaire française pas à pas.</p>
+                
+                <div class="lesson-grid">
+                    <div class="lesson-card" onclick="showLesson(1)">
+                        <h3>Les classes de mots</h3>
+                        <p>Les mots de la langue française se classent en 9 catégories principales.</p>
+                    </div>
 
-      {/* Auth Modal */}
-      {showAuthModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">
-                {authMode === 'login' ? 'Connexion' : 'Inscription'}
-              </h2>
-              <button onClick={() => setShowAuthModal(false)} className="text-gray-500 hover:text-gray-700">
-                <X size={24} />
-              </button>
+                    <div class="lesson-card" onclick="showLesson(2)">
+                        <h3>Les fonctions grammaticales</h3>
+                        <p>La fonction d'un mot indique son rôle dans la phrase.</p>
+                    </div>
+
+                    <div class="lesson-card" onclick="showLesson(3)">
+                        <h3>Les accords</h3>
+                        <p>Les accords permettent de relier les mots entre eux correctement.</p>
+                    </div>
+                </div>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-gray-700 mb-2">Nom d'utilisateur</label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="Ton pseudo"
-                />
-              </div>
+            <div id="lessonDetail" class="hidden"></div>
+        </div>
 
-              <div>
-                <label className="block text-gray-700 mb-2">Mot de passe</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="Ton mot de passe"
-                />
-              </div>
+        <!-- Conjugation Page -->
+        <div id="conjugation" class="page">
+            <h1 style="font-size: 36px; margin-bottom: 24px;">⏰ Conjugaison</h1>
+            <p style="color: #6b7280; margin-bottom: 32px;">Maîtrise les temps verbaux essentiels pour le brevet.</p>
 
-              <button
-                onClick={handleAuth}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
-              >
-                {authMode === 'login' ? 'Se connecter' : 'S\'inscrire'}
-              </button>
+            <div class="lesson-grid">
+                <div class="card">
+                    <h3>Le présent</h3>
+                    <p style="margin-bottom: 16px;">Utilise le présent pour parler de maintenant ou d'une vérité générale.</p>
+                    <div class="rule-box">
+                        <p style="font-weight: 600; margin-bottom: 8px;">Exemple : verbe MANGER</p>
+                        <p>Je mange, tu manges, il/elle mange</p>
+                        <p>Nous mangeons, vous mangez, ils/elles mangent</p>
+                    </div>
+                </div>
 
-              <button
-                onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
-                className="w-full text-blue-600 hover:underline"
-              >
-                {authMode === 'login' ? 'Pas encore de compte ? Inscris-toi !' : 'Déjà un compte ? Connecte-toi !'}
-              </button>
+                <div class="card">
+                    <h3>L'imparfait</h3>
+                    <p style="margin-bottom: 16px;">Utilise l'imparfait pour parler d'une action du passé qui durait.</p>
+                    <div class="example-box">
+                        <p style="font-weight: 600; margin-bottom: 8px;">Exemple : verbe ÊTRE</p>
+                        <p>J'étais, tu étais, il/elle était</p>
+                        <p>Nous étions, vous étiez, ils/elles étaient</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Le passé composé</h3>
+                    <p style="margin-bottom: 16px;">Utilise le passé composé pour parler d'une action terminée du passé.</p>
+                    <div class="exercise-box">
+                        <p style="font-weight: 600; margin-bottom: 8px;">Exemple : verbe ALLER</p>
+                        <p>Je suis allé(e), tu es allé(e), il/elle est allé(e)</p>
+                        <p>Nous sommes allé(e)s, vous êtes allé(e)s, ils/elles sont allé(e)s</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Le futur simple</h3>
+                    <p style="margin-bottom: 16px;">Utilise le futur pour parler de ce qui va arriver.</p>
+                    <div style="background: #f3e8ff; padding: 20px; border-radius: 8px;">
+                        <p style="font-weight: 600; margin-bottom: 8px;">Exemple : verbe AVOIR</p>
+                        <p>J'aurai, tu auras, il/elle aura</p>
+                        <p>Nous aurons, vous aurez, ils/elles auront</p>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      )}
 
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white mt-12 py-8">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="mb-2">Site d'aide en français - Niveau 3e</p>
-          <p className="text-sm text-gray-400">Projet éducatif non officiel • Créé pour aider les élèves en difficulté</p>
-          <p className="text-sm text-gray-400 mt-2">💪 Continue à t'entraîner, tu vas réussir !</p>
+        <!-- Orthography Page -->
+        <div id="orthography" class="page">
+            <h1 style="font-size: 36px; margin-bottom: 24px;">✍️ Orthographe</h1>
+            <p style="color: #6b7280; margin-bottom: 32px;">Évite les fautes les plus courantes avec ces astuces simples.</p>
+
+            <div class="lesson-grid">
+                <div class="card">
+                    <h3>a / à</h3>
+                    <div style="margin-top: 16px;">
+                        <p style="margin-bottom: 8px;"><strong>a</strong> = verbe avoir (tu peux le remplacer par "avait")</p>
+                        <p style="background: #dbeafe; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                            Ex : Il <u>a</u> un chat → Il avait un chat ✓
+                        </p>
+                        <p style="margin-bottom: 8px;"><strong>à</strong> = préposition (ne change jamais)</p>
+                        <p style="background: #dbeafe; padding: 12px; border-radius: 6px;">
+                            Ex : Je vais <u>à</u> l'école → Je vais avait l'école ✗
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>et / est</h3>
+                    <div style="margin-top: 16px;">
+                        <p style="margin-bottom: 8px;"><strong>et</strong> = mot de liaison (tu peux le remplacer par "et puis")</p>
+                        <p style="background: #d1fae5; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                            Ex : Paul <u>et</u> Marie → Paul et puis Marie ✓
+                        </p>
+                        <p style="margin-bottom: 8px;"><strong>est</strong> = verbe être (tu peux le remplacer par "était")</p>
+                        <p style="background: #d1fae5; padding: 12px; border-radius: 6px;">
+                            Ex : Il <u>est</u> gentil → Il était gentil ✓
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>son / sont</h3>
+                    <div style="margin-top: 16px;">
+                        <p style="margin-bottom: 8px;"><strong>son</strong> = déterminant possessif (tu peux le remplacer par "mon")</p>
+                        <p style="background: #fef3c7; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                            Ex : <u>Son</u> livre → Mon livre ✓
+                        </p>
+                        <p style="margin-bottom: 8px;"><strong>sont</strong> = verbe être (tu peux le remplacer par "étaient")</p>
+                        <p style="background: #fef3c7; padding: 12px; border-radius: 6px;">
+                            Ex : Ils <u>sont</u> là → Ils étaient là ✓
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>L'accord du participe passé</h3>
+                    <div style="margin-top: 16px;">
+                        <p style="margin-bottom: 8px;"><strong>Avec être :</strong> le participe s'accorde avec le sujet</p>
+                        <p style="background: #f3e8ff; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                            Ex : Elles sont <u>allées</u> (féminin pluriel)
+                        </p>
+                        <p style="margin-bottom: 8px;"><strong>Avec avoir :</strong> le participe ne s'accorde pas (sauf cas particulier)</p>
+                        <p style="background: #f3e8ff; padding: 12px; border-radius: 6px;">
+                            Ex : Elles ont <u>mangé</u> (pas d'accord)
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
-      </footer>
-    </div>
-  );
-};
 
-export default FrenchHelpSite;
+        <!-- Brevet Page -->
+        <div id="brevet" class="page">
+            <h1 style="font-size: 36px; margin-bottom: 24px;">🎯 Méthode Brevet</h1>
+            <p style="color: #6b7280; margin-bottom: 32px;">Prépare-toi efficacement pour réussir l'épreuve de français du brevet.</p>
+
+            <div class="lesson-grid">
+                <div class="card">
+                    <h3>1. Répondre aux questions de compréhension</h3>
+                    <ul style="list-style: none; margin-top: 16px;">
+                        <li style="margin: 12px 0; display: flex; align-items: start;">
+                            <span style="color: #10b981; margin-right: 8px;">✓</span>
+                            <span>Lis bien la question et souligne les mots importants</span>
+                        </li>
+                        <li style="margin: 12px 0; display: flex; align-items: start;">
+                            <span style="color: #10b981; margin-right: 8px;">✓</span>
+                            <span>Cherche la réponse dans le texte</span>
+                        </li>
+                        <li style
