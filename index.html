@@ -847,4 +847,585 @@
                             <span style="color: #10b981; margin-right: 8px;">✓</span>
                             <span>Cherche la réponse dans le texte</span>
                         </li>
-                        <li style
+                        <li style="margin: 12px 0; display: flex; align-items: start;">
+                            <span style="color: #10b981; margin-right: 8px;">✓</span>
+                            <span>Cite le texte entre guillemets si nécessaire</span>
+                        </li>
+                        <li style="margin: 12px 0; display: flex; align-items: start;">
+                            <span style="color: #10b981; margin-right: 8px;">✓</span>
+                            <span>Rédige une phrase complète avec sujet + verbe</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>2. Écrire un paragraphe clair</h3>
+                    <div class="rule-box" style="margin-top: 16px;">
+                        <p style="font-weight: 600; margin-bottom: 12px;">Structure :</p>
+                        <p>• 1 idée principale par paragraphe</p>
+                        <p>• 1 phrase d'introduction</p>
+                        <p>• 2-3 phrases qui développent</p>
+                        <p>• 1 phrase de conclusion</p>
+                        <p style="margin-top: 12px;"><strong>Astuce :</strong> Fais des phrases courtes et simples pour éviter les fautes !</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>3. La rédaction</h3>
+                    <div style="margin-top: 16px;">
+                        <div class="example-box" style="margin-bottom: 16px;">
+                            <p style="font-weight: 600; margin-bottom: 12px;">Avant d'écrire :</p>
+                            <p>• Lis bien la consigne</p>
+                            <p>• Fais un plan au brouillon</p>
+                            <p>• Note tes idées principales</p>
+                        </div>
+                        <div class="exercise-box">
+                            <p style="font-weight: 600; margin-bottom: 12px;">En écrivant :</p>
+                            <p>• Saute des lignes entre les parties</p>
+                            <p>• Vérifie tes accords</p>
+                            <p>• Relis-toi à la fin !</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>4. Gestion du temps</h3>
+                    <div style="background: #f3e8ff; padding: 20px; border-radius: 8px; margin-top: 16px;">
+                        <p style="font-weight: 600; margin-bottom: 12px;">Durée totale : 3h</p>
+                        <p>• Questions de compréhension : 1h</p>
+                        <p>• Dictée : 20 min</p>
+                        <p>• Réécriture : 15 min</p>
+                        <p>• Rédaction : 1h15</p>
+                        <p style="margin-top: 12px; font-weight: 600;">Garde 10 min pour te relire !</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dictee Page -->
+        <div id="dictee" class="page">
+            <div id="dicteeList">
+                <h1 style="font-size: 36px; margin-bottom: 24px;">🎧 Dictées interactives</h1>
+                <p style="color: #6b7280; margin-bottom: 32px;">Entraîne-toi avec des dictées progressives pour améliorer ton orthographe.</p>
+                
+                <div class="lesson-grid">
+                    <div class="lesson-card" onclick="showDictee(1)">
+                        <h3>Dictée 1 - Niveau facile</h3>
+                        <p>🔊 Audio disponible</p>
+                        <p style="color: #2563eb; margin-top: 8px; font-size: 14px;">Récompense : 20 points</p>
+                    </div>
+
+                    <div class="lesson-card" onclick="showDictee(2)">
+                        <h3>Dictée 2 - Niveau moyen</h3>
+                        <p>🔊 Audio disponible</p>
+                        <p style="color: #2563eb; margin-top: 8px; font-size: 14px;">Récompense : 30 points</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dicteeDetail" class="hidden"></div>
+        </div>
+
+        <!-- Profile Page -->
+        <div id="profile" class="page">
+            <div id="profileNotLogged">
+                <h1 style="font-size: 36px; margin-bottom: 24px; text-align: center;">👤 Mon profil</h1>
+                <p style="text-align: center; color: #6b7280; margin-bottom: 32px;">Connecte-toi pour suivre ta progression !</p>
+                <div style="text-align: center;">
+                    <button class="btn-primary" onclick="showAuthModal('login')">Se connecter</button>
+                </div>
+            </div>
+
+            <div id="profileLogged" class="hidden">
+                <h1 style="font-size: 36px; margin-bottom: 24px;">👤 Mon profil</h1>
+                
+                <div class="profile-header">
+                    <div class="profile-top">
+                        <div>
+                            <h2 id="profileUsername"></h2>
+                            <p style="color: #6b7280;">Membre actif</p>
+                        </div>
+                        <div class="rank-icon" id="profileRankIcon"></div>
+                    </div>
+
+                    <div class="rank-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="font-size: 14px; opacity: 0.9;">Ton rang</p>
+                                <h3 id="profileRankName"></h3>
+                            </div>
+                            <div style="font-size: 48px;">🏆</div>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;">
+                                <span>Progression</span>
+                                <span id="profilePoints"></span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="profileProgress"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card" style="background: #dbeafe;">
+                            <div class="icon">⭐</div>
+                            <div class="value" id="statPoints"></div>
+                            <div class="label">Points totaux</div>
+                        </div>
+                        <div class="stat-card" style="background: #d1fae5;">
+                            <div class="icon">✅</div>
+                            <div class="value" id="statExercises"></div>
+                            <div class="label">Exercices réussis</div>
+                        </div>
+                        <div class="stat-card" style="background: #f3e8ff;">
+                            <div class="icon">🏆</div>
+                            <div class="value" id="statRank"></div>
+                            <div class="label">Rang actuel</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ranks-list">
+                    <h3 style="font-size: 20px; margin-bottom: 16px;">🏆 Tous les rangs</h3>
+                    <div id="ranksList"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="authTitle">Connexion</h2>
+                <button class="close-btn" onclick="closeAuthModal()">×</button>
+            </div>
+
+            <form id="authForm" onsubmit="handleAuth(event)">
+                <div class="form-group">
+                    <label>Nom d'utilisateur</label>
+                    <input type="text" id="authUsername" placeholder="Ton pseudo" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Mot de passe</label>
+                    <input type="password" id="authPassword" placeholder="Ton mot de passe" required>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width: 100%;">
+                    <span id="authButtonText">Se connecter</span>
+                </button>
+
+                <button type="button" class="link-btn" id="authSwitch" onclick="switchAuthMode()">
+                    Pas encore de compte ? Inscris-toi !
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>Site d'aide en français - Niveau 3e</p>
+        <p class="footer-small">Projet éducatif non officiel • Créé pour aider les élèves en difficulté</p>
+        <p class="footer-small">💪 Continue à t'entraîner, tu vas réussir !</p>
+    </footer>
+
+    <script>
+        // État de l'application
+        let currentUser = null;
+        let authMode = 'login';
+
+        // Données des leçons
+        const lessons = {
+            1: {
+                title: 'Les classes de mots',
+                content: 'Les mots de la langue française se classent en 9 catégories principales.',
+                rule: 'Il existe des mots variables (qui changent) et invariables (qui ne changent pas).',
+                example: '• Nom : chien, maison\n• Verbe : manger, courir\n• Adjectif : beau, grand\n• Adverbe : rapidement, très',
+                exercise: {
+                    question: 'Dans la phrase "Le chat noir mange rapidement", identifie la classe de chaque mot.',
+                    answer: 'le = déterminant, chat = nom, noir = adjectif, mange = verbe, rapidement = adverbe',
+                    points: 10
+                }
+            },
+            2: {
+                title: 'Les fonctions grammaticales',
+                content: 'La fonction d\'un mot indique son rôle dans la phrase.',
+                rule: 'Pour trouver le sujet, pose la question "Qui est-ce qui ?" ou "Qu\'est-ce qui ?" avant le verbe.',
+                example: 'Dans "Marie mange une pomme" :\n• Marie = sujet (qui mange ?)\n• une pomme = complément d\'objet direct (mange quoi ?)',
+                exercise: {
+                    question: 'Trouve le sujet dans : "Les élèves travaillent sérieusement."',
+                    answer: 'les élèves',
+                    points: 10
+                }
+            },
+            3: {
+                title: 'Les accords',
+                content: 'Les accords permettent de relier les mots entre eux correctement.',
+                rule: 'Le verbe s\'accorde avec son sujet. L\'adjectif s\'accorde avec le nom qu\'il qualifie.',
+                example: '• Les filles sont contentes (féminin pluriel)\n• Le garçon est content (masculin singulier)',
+                exercise: {
+                    question: 'Accorde correctement : "Les fleurs (être) beau."',
+                    answer: 'les fleurs sont belles',
+                    points: 15
+                }
+            }
+        };
+
+        const dictations = {
+            1: {
+                title: 'Dictée 1 - Niveau facile',
+                text: 'Le chat noir dort sur le canapé. Il est très fatigué.',
+                points: 20
+            },
+            2: {
+                title: 'Dictée 2 - Niveau moyen',
+                text: 'Les enfants jouent dans le jardin. Ils sont contents et rient beaucoup.',
+                points: 30
+            }
+        };
+
+        // Système de rangs
+        function getRank(points) {
+            if (points < 100) return { name: 'Débutant', icon: '🌱' };
+            if (points < 300) return { name: 'Apprenti', icon: '📚' };
+            if (points < 600) return { name: 'Collégien motivé', icon: '⭐' };
+            if (points < 1000) return { name: 'Expert 3e', icon: '🏆' };
+            return { name: 'Prêt pour le brevet', icon: '🎓' };
+        }
+
+        // Initialisation
+        function init() {
+            loadUser();
+            updateUI();
+        }
+
+        // Gestion des utilisateurs
+        function loadUser() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+            }
+        }
+
+        function saveUser(user) {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const index = users.findIndex(u => u.username === user.username);
+            if (index >= 0) {
+                users[index] = user;
+            } else {
+                users.push(user);
+            }
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            currentUser = user;
+        }
+
+        function addPoints(points) {
+            if (currentUser) {
+                currentUser.points = (currentUser.points || 0) + points;
+                currentUser.completedExercises = currentUser.completedExercises || [];
+                saveUser(currentUser);
+                updateUI();
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            updateUI();
+            showPage('home');
+        }
+
+        // Mise à jour de l'interface
+        function updateUI() {
+            if (currentUser) {
+                document.getElementById('loggedOut').classList.add('hidden');
+                document.getElementById('loggedIn').classList.remove('hidden');
+                document.getElementById('username').textContent = currentUser.username;
+                document.getElementById('profileNotLogged').classList.add('hidden');
+                document.getElementById('profileLogged').classList.remove('hidden');
+                updateProfile();
+            } else {
+                document.getElementById('loggedOut').classList.remove('hidden');
+                document.getElementById('loggedIn').classList.add('hidden');
+                document.getElementById('profileNotLogged').classList.remove('hidden');
+                document.getElementById('profileLogged').classList.add('hidden');
+            }
+        }
+
+        function updateProfile() {
+            if (!currentUser) return;
+
+            const rank = getRank(currentUser.points || 0);
+            const progress = ((currentUser.points || 0) % 100);
+
+            document.getElementById('profileUsername').textContent = currentUser.username;
+            document.getElementById('profileRankIcon').textContent = rank.icon;
+            document.getElementById('profileRankName').textContent = rank.name;
+            document.getElementById('profilePoints').textContent = (currentUser.points || 0) + ' points';
+            document.getElementById('profileProgress').style.width = progress + '%';
+            document.getElementById('statPoints').textContent = currentUser.points || 0;
+            document.getElementById('statExercises').textContent = (currentUser.completedExercises || []).length;
+            document.getElementById('statRank').textContent = rank.name;
+
+            // Liste des rangs
+            const ranks = [
+                { name: 'Débutant', icon: '🌱', points: '0-99 points', min: 0 },
+                { name: 'Apprenti', icon: '📚', points: '100-299 points', min: 100 },
+                { name: 'Collégien motivé', icon: '⭐', points: '300-599 points', min: 300 },
+                { name: 'Expert 3e', icon: '🏆', points: '600-999 points', min: 600 },
+                { name: 'Prêt pour le brevet', icon: '🎓', points: '1000+ points', min: 1000 }
+            ];
+
+            const ranksList = document.getElementById('ranksList');
+            ranksList.innerHTML = ranks.map(r => `
+                <div class="rank-item ${r.name === rank.name ? 'current' : ''}">
+                    <div class="rank-info">
+                        <div class="icon">${r.icon}</div>
+                        <div>
+                            <div style="font-weight: 600; color: #1f2937;">${r.name}</div>
+                            <div style="font-size: 14px; color: #6b7280;">${r.points}</div>
+                        </div>
+                    </div>
+                    ${r.name === rank.name ? '<span style="color: #2563eb; font-weight: 600;">Ton rang actuel</span>' : ''}
+                </div>
+            `).join('');
+        }
+
+        // Navigation
+        function showPage(pageName) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageName).classList.add('active');
+
+            // Réinitialiser les vues
+            if (pageName === 'grammar') {
+                document.getElementById('grammarList').classList.remove('hidden');
+                document.getElementById('lessonDetail').classList.add('hidden');
+            }
+            if (pageName === 'dictee') {
+                document.getElementById('dicteeList').classList.remove('hidden');
+                document.getElementById('dicteeDetail').classList.add('hidden');
+            }
+        }
+
+        // Leçons
+        function showLesson(id) {
+            const lesson = lessons[id];
+            document.getElementById('grammarList').classList.add('hidden');
+            const detail = document.getElementById('lessonDetail');
+            detail.classList.remove('hidden');
+            detail.innerHTML = `
+                <button class="back-btn" onclick="backToGrammar()">← Retour aux leçons</button>
+                <div class="lesson-detail">
+                    <h2 style="font-size: 28px; margin-bottom: 16px;">${lesson.title}</h2>
+                    
+                    <div class="lesson-section">
+                        <h3>📖 Explication</h3>
+                        <p style="color: #6b7280;">${lesson.content}</p>
+                    </div>
+
+                    <div class="rule-box">
+                        <h3>📝 Règle à retenir</h3>
+                        <p>${lesson.rule}</p>
+                    </div>
+
+                    <div class="example-box">
+                        <h3>💡 Exemples</h3>
+                        <pre style="font-family: inherit; white-space: pre-wrap;">${lesson.example}</pre>
+                    </div>
+
+                    <div class="exercise-box">
+                        <h3>✏️ Exercice (${lesson.exercise.points} points)</h3>
+                        <p style="margin-bottom: 12px;">${lesson.exercise.question}</p>
+                        <input type="text" id="exerciseAnswer${id}" placeholder="Ta réponse...">
+                        <button class="btn-secondary" onclick="checkExercise(${id})">Vérifier</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function backToGrammar() {
+            document.getElementById('grammarList').classList.remove('hidden');
+            document.getElementById('lessonDetail').classList.add('hidden');
+        }
+
+        function checkExercise(id) {
+            const lesson = lessons[id];
+            const userAnswer = document.getElementById('exerciseAnswer' + id).value.toLowerCase().trim();
+            const correctAnswer = lesson.exercise.answer.toLowerCase().trim();
+
+            if (userAnswer === correctAnswer) {
+                if (currentUser) {
+                    addPoints(lesson.exercise.points);
+                    alert(`Bravo ! Tu gagnes ${lesson.exercise.points} points ! 🎉`);
+                } else {
+                    alert('Bravo ! Connecte-toi pour gagner des points ! 🎉');
+                }
+            } else {
+                alert(`Pas tout à fait. La réponse était : ${lesson.exercise.answer}`);
+            }
+            document.getElementById('exerciseAnswer' + id).value = '';
+        }
+
+        // Dictées
+        function showDictee(id) {
+            const dictation = dictations[id];
+            document.getElementById('dicteeList').classList.add('hidden');
+            const detail = document.getElementById('dicteeDetail');
+            detail.classList.remove('hidden');
+            detail.innerHTML = `
+                <button class="back-btn" onclick="backToDictee()">← Retour aux dictées</button>
+                <div class="lesson-detail">
+                    <h2 style="font-size: 28px; margin-bottom: 16px;">${dictation.title}</h2>
+                    <p style="color: #6b7280; margin-bottom: 16px;">🔊 Audio disponible</p>
+                    <p style="color: #6b7280; font-size: 14px; margin-bottom: 24px;">
+                        💡 Astuce : Cette version n'a pas d'audio réel. Lis le texte ci-dessous, cache-le, puis essaie de l'écrire de mémoire !
+                    </p>
+                    
+                    <div class="rule-box">
+                        <p style="font-family: monospace;">${dictation.text}</p>
+                    </div>
+
+                    <textarea id="dicteeText${id}" style="width: 100%; height: 120px; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 16px; margin-bottom: 16px;" placeholder="Écris la dictée ici..."></textarea>
+
+                    <button class="btn-primary" onclick="checkDictee(${id})" style="margin-bottom: 16px;">Vérifier ma dictée</button>
+
+                    <div id="dicteeResult${id}" class="hidden" style="background: #d1fae5; padding: 20px; border-radius: 8px;">
+                        <h3 style="color: #047857; margin-bottom: 12px;">✅ Texte correct :</h3>
+                        <p style="margin-bottom: 16px;">${dictation.text}</p>
+                        <h3 style="color: #047857; margin-bottom: 12px;">📝 Ta version :</h3>
+                        <p id="userDicteeText${id}"></p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function backToDictee() {
+            document.getElementById('dicteeList').classList.remove('hidden');
+            document.getElementById('dicteeDetail').classList.add('hidden');
+        }
+
+        function checkDictee(id) {
+            const dictation = dictations[id];
+            const userText = document.getElementById('dicteeText' + id).value.toLowerCase().trim();
+            const correctText = dictation.text.toLowerCase().trim();
+
+            const similarity = userText === correctText ? 100 : calculateSimilarity(correctText, userText);
+
+            if (similarity >= 90 && currentUser) {
+                addPoints(dictation.points);
+                alert(`Excellent ! Tu gagnes ${dictation.points} points ! 🎉`);
+            } else if (similarity >= 70) {
+                alert('Bien ! Quelques petites erreurs. Continue comme ça !');
+            } else if (!currentUser && similarity >= 90) {
+                alert('Excellent ! Connecte-toi pour gagner des points ! 🎉');
+            }
+
+            document.getElementById('userDicteeText' + id).textContent = document.getElementById('dicteeText' + id).value;
+            document.getElementById('dicteeResult' + id).classList.remove('hidden');
+        }
+
+        function calculateSimilarity(a, b) {
+            const longer = a.length > b.length ? a : b;
+            const shorter = a.length > b.length ? b : a;
+            if (longer.length === 0) return 100;
+            return Math.round((longer.length - editDistance(longer, shorter)) / longer.length * 100);
+        }
+
+        function editDistance(a, b) {
+            const matrix = [];
+            for (let i = 0; i <= b.length; i++) {
+                matrix[i] = [i];
+            }
+            for (let j = 0; j <= a.length; j++) {
+                matrix[0][j] = j;
+            }
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+            return matrix[b.length][a.length];
+        }
+
+        // Authentification
+        function showAuthModal(mode) {
+            authMode = mode;
+            updateAuthModal();
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.remove('active');
+            document.getElementById('authUsername').value = '';
+            document.getElementById('authPassword').value = '';
+        }
+
+        function switchAuthMode() {
+            authMode = authMode === 'login' ? 'register' : 'login';
+            updateAuthModal();
+        }
+
+        function updateAuthModal() {
+            if (authMode === 'login') {
+                document.getElementById('authTitle').textContent = 'Connexion';
+                document.getElementById('authButtonText').textContent = 'Se connecter';
+                document.getElementById('authSwitch').textContent = 'Pas encore de compte ? Inscris-toi !';
+            } else {
+                document.getElementById('authTitle').textContent = 'Inscription';
+                document.getElementById('authButtonText').textContent = 'S\'inscrire';
+                document.getElementById('authSwitch').textContent = 'Déjà un compte ? Connecte-toi !';
+            }
+        }
+
+        function handleAuth(event) {
+            event.preventDefault();
+            const username = document.getElementById('authUsername').value;
+            const password = document.getElementById('authPassword').value;
+
+            if (authMode === 'login') {
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const user = users.find(u => u.username === username && u.password === password);
+                if (user) {
+                    currentUser = user;
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    closeAuthModal();
+                    updateUI();
+                } else {
+                    alert('Nom d\'utilisateur ou mot de passe incorrect');
+                }
+            } else {
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                if (users.find(u => u.username === username)) {
+                    alert('Ce nom d\'utilisateur existe déjà');
+                    return;
+                }
+                const newUser = { 
+                    username, 
+                    password, 
+                    points: 0, 
+                    completedExercises: [] 
+                };
+                saveUser(newUser);
+                closeAuthModal();
+                updateUI();
+            }
+        }
+
+        // Démarrage
+        init();
+    </script>
+</body>
+</html>
