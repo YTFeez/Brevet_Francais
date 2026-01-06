@@ -86,11 +86,37 @@
             cursor: pointer;
             font-size: 1em;
             transition: all 0.3s;
+            margin-left: 10px;
         }
 
         .logout-btn:hover {
             background: white;
             color: #667eea;
+        }
+
+        .trust-info {
+            background: rgba(255,255,255,0.15);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .remove-trust-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid white;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s;
+        }
+
+        .remove-trust-btn:hover {
+            background: rgba(255,100,100,0.8);
         }
 
         .form-container {
@@ -304,8 +330,12 @@
                         <input type="text" id="loginPrenom" required>
                     </div>
                     <div class="form-group">
-                        <label>Mot de passe (5 chiffres)</label>
+                        <label>Mot de passe personnel</label>
                         <input type="password" id="loginPassword" maxlength="5" pattern="[0-9]{5}" required>
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="rememberMe" style="width: auto; margin: 0;">
+                        <label for="rememberMe" style="margin: 0; cursor: pointer;">Se souvenir de moi sur cet appareil</label>
                     </div>
                     <button type="submit" class="btn">Se connecter</button>
                 </form>
@@ -347,7 +377,11 @@
                     </div>
                     <div class="form-group">
                         <label>Mot de passe de la classe (5 chiffres)</label>
-                        <input type="password" id="registerPassword" maxlength="5" pattern="[0-9]{5}" required placeholder="Demande à ton professeur">
+                        <input type="password" id="registerClassPassword" maxlength="5" pattern="[0-9]{5}" required placeholder="Demande à ton professeur">
+                    </div>
+                    <div class="form-group">
+                        <label>Créer ton mot de passe personnel (5 chiffres)</label>
+                        <input type="password" id="registerPassword" maxlength="5" pattern="[0-9]{5}" required placeholder="Ton mot de passe secret">
                     </div>
                     <button type="submit" class="btn">S'inscrire</button>
                 </form>
@@ -378,7 +412,10 @@
                         <span id="userRank">-</span>
                     </div>
                 </div>
-                <button class="logout-btn" onclick="logout()">Déconnexion</button>
+                <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+                    <div id="trustStatus" class="trust-info"></div>
+                    <button class="logout-btn" onclick="logout()">Déconnexion</button>
+                </div>
             </div>
 
             <div class="quiz-section">
@@ -444,6 +481,68 @@
         let currentUser = null;
         let currentQuestion = 0;
         let answered = false;
+        let isTrustedDevice = false;
+
+        // Chargement des données
+        function loadData() {
+            const usersData = window.localStorage.getItem('brevetUsers');
+            return usersData ? JSON.parse(usersData) : [];
+        }
+
+        function saveData(users) {
+            window.localStorage.setItem('brevetUsers', JSON.stringify(users));
+        }
+
+        // Gestion des appareils de confiance
+        function saveTrustedDevice(user) {
+            const trustedData = {
+                etablissement: user.etablissement,
+                nom: user.nom,
+                prenom: user.prenom,
+                password: user.password
+            };
+            window.localStorage.setItem('trustedDevice', JSON.stringify(trustedData));
+        }
+
+        function loadTrustedDevice() {
+            const trustedData = window.localStorage.getItem('trustedDevice');
+            return trustedData ? JSON.parse(trustedData) : null;
+        }
+
+        function removeTrustedDevice() {
+            window.localStorage.removeItem('trustedDevice');
+            isTrustedDevice = false;
+            updateTrustStatus();
+        }
+
+        function updateTrustStatus() {
+            const trustStatus = document.getElementById('trustStatus');
+            if (isTrustedDevice) {
+                trustStatus.innerHTML = '🔒 Appareil de confiance <button class="remove-trust-btn" onclick="removeTrustedDevice()">Retirer</button>';
+            } else {
+                trustStatus.innerHTML = '';
+            }
+        }
+
+        // Connexion automatique au chargement
+        window.addEventListener('load', function() {
+            const trusted = loadTrustedDevice();
+            if (trusted) {
+                const users = loadData();
+                const user = users.find(u => 
+                    u.etablissement === trusted.etablissement &&
+                    u.nom === trusted.nom && 
+                    u.prenom === trusted.prenom && 
+                    u.password === trusted.password
+                );
+
+                if (user) {
+                    currentUser = user;
+                    isTrustedDevice = true;
+                    showMainSection();
+                }
+            }
+        });
 
         // Chargement des données
         function loadData() {
@@ -472,11 +571,12 @@
             
             const users = loadData();
             const classe = document.getElementById('registerClasse').value;
-            const password = document.getElementById('registerPassword').value;
+            const classPassword = document.getElementById('registerClassPassword').value;
+            const personalPassword = document.getElementById('registerPassword').value;
             
             // Vérifier le mot de passe de la classe
-            if (classPasswords[classe] !== password) {
-                alert('Mot de passe incorrect pour cette classe ! Demande-le à ton professeur.');
+            if (classPasswords[classe] !== classPassword) {
+                alert('Mot de passe de classe incorrect ! Demande-le à ton professeur.');
                 return;
             }
             
@@ -485,7 +585,7 @@
                 nom: document.getElementById('registerNom').value,
                 prenom: document.getElementById('registerPrenom').value,
                 classe: classe,
-                password: password,
+                password: personalPassword,
                 points: 0,
                 answered: []
             };
@@ -504,7 +604,7 @@
 
             users.push(newUser);
             saveData(users);
-            alert('Inscription réussie ! Tu peux maintenant te connecter.');
+            alert('Inscription réussie ! Tu peux maintenant te connecter avec ton mot de passe personnel.');
             showLogin();
             this.reset();
         });
@@ -518,6 +618,7 @@
             const nom = document.getElementById('loginNom').value;
             const prenom = document.getElementById('loginPrenom').value;
             const password = document.getElementById('loginPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
 
             const user = users.find(u => 
                 u.etablissement === etablissement &&
@@ -528,9 +629,16 @@
 
             if (user) {
                 currentUser = user;
+                
+                // Sauvegarder l'appareil de confiance si demandé
+                if (rememberMe) {
+                    saveTrustedDevice(user);
+                    isTrustedDevice = true;
+                }
+                
                 showMainSection();
             } else {
-                alert('Identifiants incorrects !');
+                alert('Identifiants incorrects ! Vérifie ton mot de passe personnel.');
             }
         });
 
@@ -542,14 +650,23 @@
             document.getElementById('userName').textContent = currentUser.prenom + ' ' + currentUser.nom;
             document.getElementById('userClass').textContent = currentUser.classe;
             updateUserInfo();
+            updateTrustStatus();
             loadQuestion();
             updateScoreboard();
         }
 
         function logout() {
+            if (isTrustedDevice) {
+                const confirm = window.confirm('Tu es connecté sur un appareil de confiance. Veux-tu aussi retirer cet appareil de tes appareils de confiance ?');
+                if (confirm) {
+                    removeTrustedDevice();
+                }
+            }
+            
             currentUser = null;
             currentQuestion = 0;
             answered = false;
+            isTrustedDevice = false;
             document.getElementById('mainSection').classList.add('hidden');
             showLogin();
         }
