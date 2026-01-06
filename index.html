@@ -346,8 +346,8 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Créer un mot de passe (5 chiffres)</label>
-                        <input type="password" id="registerPassword" maxlength="5" pattern="[0-9]{5}" required>
+                        <label>Mot de passe de la classe (5 chiffres)</label>
+                        <input type="password" id="registerPassword" maxlength="5" pattern="[0-9]{5}" required placeholder="Demande à ton professeur">
                     </div>
                     <button type="submit" class="btn">S'inscrire</button>
                 </form>
@@ -404,6 +404,14 @@
     </div>
 
     <script>
+        // Mots de passe par classe
+        const classPasswords = {
+            '3A': '12345',
+            '3B': '23456',
+            '3C': '34567',
+            '3D': '45678'
+        };
+
         // Questions de grammaire
         const questions = [
             {
@@ -463,12 +471,21 @@
             e.preventDefault();
             
             const users = loadData();
+            const classe = document.getElementById('registerClasse').value;
+            const password = document.getElementById('registerPassword').value;
+            
+            // Vérifier le mot de passe de la classe
+            if (classPasswords[classe] !== password) {
+                alert('Mot de passe incorrect pour cette classe ! Demande-le à ton professeur.');
+                return;
+            }
+            
             const newUser = {
                 etablissement: document.getElementById('registerEtablissement').value,
                 nom: document.getElementById('registerNom').value,
                 prenom: document.getElementById('registerPrenom').value,
-                classe: document.getElementById('registerClasse').value,
-                password: document.getElementById('registerPassword').value,
+                classe: classe,
+                password: password,
                 points: 0,
                 answered: []
             };
