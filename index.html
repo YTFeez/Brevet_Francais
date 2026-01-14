@@ -286,19 +286,23 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: rgba(0,0,0,0.1);
-            color: rgba(0,0,0,0.3);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.8em;
+            background: rgba(102, 126, 234, 0.3);
+            color: #667eea;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9em;
             cursor: pointer;
             transition: all 0.3s;
             text-decoration: none;
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            font-weight: bold;
+            z-index: 1000;
         }
 
         .admin-link:hover {
-            background: rgba(0,0,0,0.2);
-            color: rgba(0,0,0,0.5);
+            background: rgba(102, 126, 234, 0.6);
+            color: white;
+            transform: scale(1.05);
         }
 
         .admin-panel {
@@ -642,7 +646,7 @@
             </div>
         </div>
 
-        <a class="admin-link" onclick="showAdminLogin()">Admin</a>
+        <a class="admin-link" onclick="showAdminLogin()" style="user-select: none;">🔐 Admin</a>
     </div>
 
     <script>
@@ -696,17 +700,28 @@
         let answered = false;
         let isTrustedDevice = false;
 
-        // Chargement des données
-        function loadData() {
-            const usersData = window.localStorage.getItem('brevetUsers');
-            return usersData ? JSON.parse(usersData) : [];
+        // Chargement des données avec window.storage
+        async function loadData() {
+            try {
+                const result = await window.storage.get('brevet-users', true);
+                return result ? JSON.parse(result.value) : [];
+            } catch (error) {
+                console.log('Aucune donnée trouvée, création nouvelle base');
+                return [];
+            }
         }
 
-        function saveData(users) {
-            window.localStorage.setItem('brevetUsers', JSON.stringify(users));
+        async function saveData(users) {
+            try {
+                await window.storage.set('brevet-users', JSON.stringify(users), true);
+                console.log('Données sauvegardées avec succès');
+            } catch (error) {
+                console.error('Erreur sauvegarde:', error);
+                alert('Erreur lors de la sauvegarde des données');
+            }
         }
 
-        // Gestion des appareils de confiance
+        // Gestion des appareils de confiance (stockage local seulement)
         function saveTrustedDevice(user) {
             const trustedData = {
                 etablissement: user.etablissement,
@@ -797,10 +812,10 @@
         }
 
         // Inscription
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const users = loadData();
+            const users = await loadData();
             const classe = document.getElementById('registerClasse').value;
             const classPassword = document.getElementById('registerClassPassword').value;
             const personalPassword = document.getElementById('registerPassword').value;
@@ -834,17 +849,17 @@
             }
 
             users.push(newUser);
-            saveData(users);
-            alert('Inscription réussie ! Tu peux maintenant te connecter avec ton mot de passe personnel.');
+            await saveData(users);
+            alert('✅ Inscription réussie ! Tu peux maintenant te connecter avec ton mot de passe personnel.');
             showLogin();
             this.reset();
         });
 
         // Connexion
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const users = loadData();
+            const users = await loadData();
             const etablissement = document.getElementById('loginEtablissement').value;
             const nom = document.getElementById('loginNom').value;
             const prenom = document.getElementById('loginPrenom').value;
@@ -869,7 +884,7 @@
                 
                 showMainSection();
             } else {
-                alert('Identifiants incorrects ! Vérifie ton mot de passe personnel.');
+                alert('❌ Identifiants incorrects ! Vérifie ton mot de passe personnel.');
             }
         });
 
@@ -943,35 +958,45 @@
             options[q.correct].classList.add('correct');
 
             // Mettre à jour les points
-            const users = loadData();
+            updatePoints(isCorrect);
+
+            if (isCorrect) {
+                document.getElementById('resultMessage').innerHTML = `
+                    <div class="result-message correct">✓ Bonne réponse ! +10 points</div>
+                `;
+            } else {
+                document.getElementById('resultMessage').innerHTML = `
+                    <div class="result-message incorrect">✗ Mauvaise réponse ! -5 points<br>La bonne réponse était : ${q.options[q.correct]}</div>
+                `;
+            }
+
+            setTimeout(() => {
+                currentQuestion++;
+                loadQuestion();
+            }, 3000);
+        }
+
+        async function updatePoints(isCorrect) {
+            const users = await loadData();
             const userIndex = users.findIndex(u => 
                 u.nom === currentUser.nom && 
                 u.prenom === currentUser.prenom && 
                 u.etablissement === currentUser.etablissement
             );
 
-            if (isCorrect) {
-                users[userIndex].points += 10;
-                currentUser.points += 10;
-                document.getElementById('resultMessage').innerHTML = `
-                    <div class="result-message correct">✓ Bonne réponse ! +10 points</div>
-                `;
-            } else {
-                users[userIndex].points = Math.max(0, users[userIndex].points - 5);
-                currentUser.points = Math.max(0, currentUser.points - 5);
-                document.getElementById('resultMessage').innerHTML = `
-                    <div class="result-message incorrect">✗ Mauvaise réponse ! -5 points<br>La bonne réponse était : ${q.options[q.correct]}</div>
-                `;
+            if (userIndex !== -1) {
+                if (isCorrect) {
+                    users[userIndex].points += 10;
+                    currentUser.points += 10;
+                } else {
+                    users[userIndex].points = Math.max(0, users[userIndex].points - 5);
+                    currentUser.points = Math.max(0, currentUser.points - 5);
+                }
+
+                await saveData(users);
+                updateUserInfo();
+                updateScoreboard();
             }
-
-            saveData(users);
-            updateUserInfo();
-            updateScoreboard();
-
-            setTimeout(() => {
-                currentQuestion++;
-                loadQuestion();
-            }, 3000);
         }
 
         function restartQuiz() {
@@ -980,10 +1005,10 @@
             loadQuestion();
         }
 
-        function updateUserInfo() {
+        async function updateUserInfo() {
             document.getElementById('userPoints').textContent = currentUser.points;
             
-            const users = loadData();
+            const users = await loadData();
             users.sort((a, b) => b.points - a.points);
             const rank = users.findIndex(u => 
                 u.nom === currentUser.nom && 
@@ -994,8 +1019,8 @@
             document.getElementById('userRank').textContent = rank + (rank === 1 ? 'er' : 'ème');
         }
 
-        function updateScoreboard() {
-            const users = loadData();
+        async function updateScoreboard() {
+            const users = await loadData();
             users.sort((a, b) => b.points - a.points);
             
             let html = '';
@@ -1013,6 +1038,132 @@
             
             document.getElementById('scoreboardBody').innerHTML = html;
         }
+
+        // === PANEL ADMIN ===
+
+        // Connexion Admin
+        document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            console.log('Tentative de connexion admin');
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+
+            console.log('Username entré:', username);
+            console.log('Username attendu:', ADMIN_CREDENTIALS.username);
+            console.log('Match username:', username === ADMIN_CREDENTIALS.username);
+            console.log('Match password:', password === ADMIN_CREDENTIALS.password);
+
+            if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+                console.log('Connexion admin réussie !');
+                isAdmin = true;
+                showAdminPanel();
+            } else {
+                console.log('Échec connexion admin');
+                alert('❌ Identifiants administrateur incorrects !\n\nUtilise:\nIdentifiant: admin_brevet\nMot de passe: ADM2024!');
+            }
+        });
+
+        function showAdminPanel() {
+            console.log('Affichage panel admin');
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('registerSection').classList.add('hidden');
+            document.getElementById('mainSection').classList.add('hidden');
+            document.getElementById('adminLoginSection').classList.add('hidden');
+            document.getElementById('adminPanel').classList.remove('hidden');
+            
+            updateAdminStats();
+            displayAllUsers();
+            
+            // Initialiser la recherche
+            const searchBox = document.getElementById('searchUsers');
+            if (searchBox) {
+                searchBox.value = '';
+            }
+        }add('hidden');
+            document.getElementById('registerSection').classList.add('hidden');
+            document.getElementById('mainSection').classList.add('hidden');
+            document.getElementById('adminLoginSection').classList.add('hidden');
+            document.getElementById('adminPanel').classList.remove('hidden');
+            
+            updateAdminStats();
+            displayAllUsers();
+        }
+
+        function adminLogout() {
+            isAdmin = false;
+            document.getElementById('adminLoginForm').reset();
+            showLogin();
+        }
+
+        function updateAdminStats() {
+            const users = loadData();
+            const totalUsers = users.length;
+            const totalPoints = users.reduce((sum, u) => sum + u.points, 0);
+            const avgPoints = totalUsers > 0 ? Math.round(totalPoints / totalUsers) : 0;
+
+            document.getElementById('totalUsers').textContent = totalUsers;
+            document.getElementById('totalPoints').textContent = totalPoints;
+            document.getElementById('avgPoints').textContent = avgPoints;
+        }
+
+        function displayAllUsers(filter = '') {
+            const users = loadData();
+            const tbody = document.getElementById('adminUsersBody');
+            
+            let filteredUsers = users;
+            if (filter) {
+                const searchTerm = filter.toLowerCase();
+                filteredUsers = users.filter(u => 
+                    u.nom.toLowerCase().includes(searchTerm) ||
+                    u.prenom.toLowerCase().includes(searchTerm) ||
+                    u.classe.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            let html = '';
+            filteredUsers.forEach((user, index) => {
+                html += `
+                    <tr>
+                        <td>${user.nom}</td>
+                        <td>${user.prenom}</td>
+                        <td>${user.classe}</td>
+                        <td>${user.etablissement}</td>
+                        <td><strong>${user.points}</strong></td>
+                        <td>
+                            <button class="delete-btn" onclick="deleteUser('${user.nom}', '${user.prenom}', '${user.etablissement}')">
+                                🗑️ Supprimer
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if (filteredUsers.length === 0) {
+                html = '<tr><td colspan="6" style="text-align: center; padding: 30px; color: #aaa;">Aucun élève trouvé</td></tr>';
+            }
+
+            tbody.innerHTML = html;
+        }
+
+        function deleteUser(nom, prenom, etablissement) {
+            const confirmDelete = confirm(`⚠️ Êtes-vous sûr de vouloir supprimer le compte de ${prenom} ${nom} ?\n\nCette action est irréversible !`);
+            
+            if (confirmDelete) {
+                let users = loadData();
+                users = users.filter(u => !(u.nom === nom && u.prenom === prenom && u.etablissement === etablissement));
+                saveData(users);
+                
+                alert(`✓ Le compte de ${prenom} ${nom} a été supprimé avec succès.`);
+                updateAdminStats();
+                displayAllUsers();
+            }
+        }
+
+        // Recherche en temps réel
+        document.getElementById('searchUsers').addEventListener('input', function(e) {
+            displayAllUsers(e.target.value);
+        });
     </script>
 </body>
 </html>
