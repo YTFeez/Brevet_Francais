@@ -55,11 +55,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .user-details {
             display: flex;
             gap: 30px;
+            flex-wrap: wrap;
         }
 
         .user-detail {
@@ -86,7 +89,6 @@
             cursor: pointer;
             font-size: 1em;
             transition: all 0.3s;
-            margin-left: 10px;
         }
 
         .logout-btn:hover {
@@ -282,6 +284,25 @@
             display: none;
         }
 
+        .result-message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .result-message.correct {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .result-message.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
         .admin-link {
             position: fixed;
             bottom: 20px;
@@ -427,23 +448,11 @@
             border-color: #00d4ff;
         }
 
-        .result-message {
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 15px;
+        .loading {
             text-align: center;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-
-        .result-message.correct {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .result-message.incorrect {
-            background: #f8d7da;
-            color: #721c24;
+            padding: 20px;
+            color: #667eea;
+            font-size: 1.2em;
         }
     </style>
 </head>
@@ -584,7 +593,7 @@
             </div>
         </div>
 
-        <!-- Panel Admin -->
+        <!-- Panel Admin Login -->
         <div id="adminLoginSection" class="hidden">
             <div class="form-container">
                 <h2 style="text-align: center; color: #00d4ff; margin-bottom: 30px;">🔐 Connexion Administrateur</h2>
@@ -605,6 +614,7 @@
             </div>
         </div>
 
+        <!-- Panel Admin -->
         <div id="adminPanel" class="hidden">
             <div class="admin-panel">
                 <div class="admin-header">
@@ -646,17 +656,15 @@
             </div>
         </div>
 
-        <a class="admin-link" onclick="showAdminLogin()" style="user-select: none;">🔐 Admin</a>
+        <a class="admin-link" onclick="showAdminLogin()">🔐 Admin</a>
     </div>
 
     <script>
-        // Identifiants Admin sécurisés
+        // Identifiants Admin
         const ADMIN_CREDENTIALS = {
             username: 'admin_brevet',
             password: 'ADM2024!'
         };
-
-        let isAdmin = false;
 
         // Mots de passe par classe
         const classPasswords = {
@@ -699,14 +707,14 @@
         let currentQuestion = 0;
         let answered = false;
         let isTrustedDevice = false;
+        let isAdmin = false;
 
-        // Chargement des données avec window.storage
+        // Chargement et sauvegarde avec window.storage
         async function loadData() {
             try {
                 const result = await window.storage.get('brevet-users', true);
                 return result ? JSON.parse(result.value) : [];
             } catch (error) {
-                console.log('Aucune donnée trouvée, création nouvelle base');
                 return [];
             }
         }
@@ -714,14 +722,12 @@
         async function saveData(users) {
             try {
                 await window.storage.set('brevet-users', JSON.stringify(users), true);
-                console.log('Données sauvegardées avec succès');
             } catch (error) {
                 console.error('Erreur sauvegarde:', error);
-                alert('Erreur lors de la sauvegarde des données');
             }
         }
 
-        // Gestion des appareils de confiance (stockage local seulement)
+        // Gestion appareil de confiance
         function saveTrustedDevice(user) {
             const trustedData = {
                 etablissement: user.etablissement,
@@ -729,34 +735,34 @@
                 prenom: user.prenom,
                 password: user.password
             };
-            window.localStorage.setItem('trustedDevice', JSON.stringify(trustedData));
+            localStorage.setItem('trustedDevice', JSON.stringify(trustedData));
         }
 
         function loadTrustedDevice() {
-            const trustedData = window.localStorage.getItem('trustedDevice');
-            return trustedData ? JSON.parse(trustedData) : null;
+            const data = localStorage.getItem('trustedDevice');
+            return data ? JSON.parse(data) : null;
         }
 
         function removeTrustedDevice() {
-            window.localStorage.removeItem('trustedDevice');
+            localStorage.removeItem('trustedDevice');
             isTrustedDevice = false;
             updateTrustStatus();
         }
 
         function updateTrustStatus() {
             const trustStatus = document.getElementById('trustStatus');
-            if (isTrustedDevice) {
+            if (isTrustedDevice && trustStatus) {
                 trustStatus.innerHTML = '🔒 Appareil de confiance <button class="remove-trust-btn" onclick="removeTrustedDevice()">Retirer</button>';
-            } else {
+            } else if (trustStatus) {
                 trustStatus.innerHTML = '';
             }
         }
 
-        // Connexion automatique au chargement
-        window.addEventListener('load', function() {
+        // Connexion auto
+        window.addEventListener('load', async function() {
             const trusted = loadTrustedDevice();
             if (trusted) {
-                const users = loadData();
+                const users = await loadData();
                 const user = users.find(u => 
                     u.etablissement === trusted.etablissement &&
                     u.nom === trusted.nom && 
@@ -772,17 +778,7 @@
             }
         });
 
-        // Chargement des données
-        function loadData() {
-            const usersData = window.localStorage.getItem('brevetUsers');
-            return usersData ? JSON.parse(usersData) : [];
-        }
-
-        function saveData(users) {
-            window.localStorage.setItem('brevetUsers', JSON.stringify(users));
-        }
-
-        // Affichage des sections
+        // Navigation
         function showLogin() {
             document.getElementById('loginSection').classList.remove('hidden');
             document.getElementById('registerSection').classList.add('hidden');
@@ -820,9 +816,8 @@
             const classPassword = document.getElementById('registerClassPassword').value;
             const personalPassword = document.getElementById('registerPassword').value;
             
-            // Vérifier le mot de passe de la classe
             if (classPasswords[classe] !== classPassword) {
-                alert('Mot de passe de classe incorrect ! Demande-le à ton professeur.');
+                alert('❌ Mot de passe de classe incorrect !');
                 return;
             }
             
@@ -832,11 +827,9 @@
                 prenom: document.getElementById('registerPrenom').value,
                 classe: classe,
                 password: personalPassword,
-                points: 0,
-                answered: []
+                points: 0
             };
 
-            // Vérifier si l'utilisateur existe déjà
             const exists = users.find(u => 
                 u.nom === newUser.nom && 
                 u.prenom === newUser.prenom && 
@@ -844,13 +837,13 @@
             );
 
             if (exists) {
-                alert('Un compte existe déjà avec ces informations !');
+                alert('❌ Un compte existe déjà !');
                 return;
             }
 
             users.push(newUser);
             await saveData(users);
-            alert('✅ Inscription réussie ! Tu peux maintenant te connecter avec ton mot de passe personnel.');
+            alert('✅ Inscription réussie !');
             showLogin();
             this.reset();
         });
@@ -876,7 +869,6 @@
             if (user) {
                 currentUser = user;
                 
-                // Sauvegarder l'appareil de confiance si demandé
                 if (rememberMe) {
                     saveTrustedDevice(user);
                     isTrustedDevice = true;
@@ -884,7 +876,7 @@
                 
                 showMainSection();
             } else {
-                alert('❌ Identifiants incorrects ! Vérifie ton mot de passe personnel.');
+                alert('❌ Identifiants incorrects !');
             }
         });
 
@@ -892,6 +884,8 @@
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('registerSection').classList.add('hidden');
             document.getElementById('mainSection').classList.remove('hidden');
+            document.getElementById('adminLoginSection').classList.add('hidden');
+            document.getElementById('adminPanel').classList.add('hidden');
             
             document.getElementById('userName').textContent = currentUser.prenom + ' ' + currentUser.nom;
             document.getElementById('userClass').textContent = currentUser.classe;
@@ -903,8 +897,8 @@
 
         function logout() {
             if (isTrustedDevice) {
-                const confirm = window.confirm('Tu es connecté sur un appareil de confiance. Veux-tu aussi retirer cet appareil de tes appareils de confiance ?');
-                if (confirm) {
+                const conf = confirm('Retirer aussi cet appareil de confiance ?');
+                if (conf) {
                     removeTrustedDevice();
                 }
             }
@@ -913,16 +907,16 @@
             currentQuestion = 0;
             answered = false;
             isTrustedDevice = false;
-            document.getElementById('mainSection').classList.add('hidden');
             showLogin();
         }
 
+        // Quiz
         function loadQuestion() {
             if (currentQuestion >= questions.length) {
                 document.getElementById('quizContainer').innerHTML = `
                     <div class="quiz-card">
-                        <h3 style="text-align: center; color: #667eea;">🎉 Bravo ! Tu as terminé tous les exercices !</h3>
-                        <p style="text-align: center; margin-top: 15px;">Total de points : <strong>${currentUser.points}</strong></p>
+                        <h3 style="text-align: center; color: #667eea;">🎉 Bravo ! Tous les exercices terminés !</h3>
+                        <p style="text-align: center; margin-top: 15px;">Total : <strong>${currentUser.points}</strong> points</p>
                         <button class="btn" style="margin-top: 20px;" onclick="restartQuiz()">Recommencer</button>
                     </div>
                 `;
@@ -957,7 +951,6 @@
             options[selected].classList.add(isCorrect ? 'correct' : 'incorrect');
             options[q.correct].classList.add('correct');
 
-            // Mettre à jour les points
             updatePoints(isCorrect);
 
             if (isCorrect) {
@@ -966,7 +959,7 @@
                 `;
             } else {
                 document.getElementById('resultMessage').innerHTML = `
-                    <div class="result-message incorrect">✗ Mauvaise réponse ! -5 points<br>La bonne réponse était : ${q.options[q.correct]}</div>
+                    <div class="result-message incorrect">✗ Mauvaise réponse ! -5 points<br>Bonne réponse : ${q.options[q.correct]}</div>
                 `;
             }
 
@@ -1036,51 +1029,26 @@
                 `;
             });
             
-            document.getElementById('scoreboardBody').innerHTML = html;
+            document.getElementById('scoreboardBody').innerHTML = html || '<tr><td colspan="4" style="text-align:center;">Aucun élève inscrit</td></tr>';
         }
 
-        // === PANEL ADMIN ===
-
-        // Connexion Admin
+        // Admin
         document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            console.log('Tentative de connexion admin');
             const username = document.getElementById('adminUsername').value;
             const password = document.getElementById('adminPassword').value;
 
-            console.log('Username entré:', username);
-            console.log('Username attendu:', ADMIN_CREDENTIALS.username);
-            console.log('Match username:', username === ADMIN_CREDENTIALS.username);
-            console.log('Match password:', password === ADMIN_CREDENTIALS.password);
-
             if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-                console.log('Connexion admin réussie !');
                 isAdmin = true;
                 showAdminPanel();
             } else {
-                console.log('Échec connexion admin');
-                alert('❌ Identifiants administrateur incorrects !\n\nUtilise:\nIdentifiant: admin_brevet\nMot de passe: ADM2024!');
+                alert('❌ Identifiants admin incorrects !');
             }
         });
 
         function showAdminPanel() {
-            console.log('Affichage panel admin');
             document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('registerSection').classList.add('hidden');
-            document.getElementById('mainSection').classList.add('hidden');
-            document.getElementById('adminLoginSection').classList.add('hidden');
-            document.getElementById('adminPanel').classList.remove('hidden');
-            
-            updateAdminStats();
-            displayAllUsers();
-            
-            // Initialiser la recherche
-            const searchBox = document.getElementById('searchUsers');
-            if (searchBox) {
-                searchBox.value = '';
-            }
-        }add('hidden');
             document.getElementById('registerSection').classList.add('hidden');
             document.getElementById('mainSection').classList.add('hidden');
             document.getElementById('adminLoginSection').classList.add('hidden');
@@ -1096,8 +1064,8 @@
             showLogin();
         }
 
-        function updateAdminStats() {
-            const users = loadData();
+        async function updateAdminStats() {
+            const users = await loadData();
             const totalUsers = users.length;
             const totalPoints = users.reduce((sum, u) => sum + u.points, 0);
             const avgPoints = totalUsers > 0 ? Math.round(totalPoints / totalUsers) : 0;
@@ -1107,8 +1075,8 @@
             document.getElementById('avgPoints').textContent = avgPoints;
         }
 
-        function displayAllUsers(filter = '') {
-            const users = loadData();
+        async function displayAllUsers(filter = '') {
+            const users = await loadData();
             const tbody = document.getElementById('adminUsersBody');
             
             let filteredUsers = users;
@@ -1122,7 +1090,7 @@
             }
 
             let html = '';
-            filteredUsers.forEach((user, index) => {
+            filteredUsers.forEach((user) => {
                 html += `
                     <tr>
                         <td>${user.nom}</td>
@@ -1146,21 +1114,20 @@
             tbody.innerHTML = html;
         }
 
-        function deleteUser(nom, prenom, etablissement) {
-            const confirmDelete = confirm(`⚠️ Êtes-vous sûr de vouloir supprimer le compte de ${prenom} ${nom} ?\n\nCette action est irréversible !`);
+        async function deleteUser(nom, prenom, etablissement) {
+            const conf = confirm(`⚠️ Supprimer ${prenom} ${nom} ?`);
             
-            if (confirmDelete) {
-                let users = loadData();
+            if (conf) {
+                let users = await loadData();
                 users = users.filter(u => !(u.nom === nom && u.prenom === prenom && u.etablissement === etablissement));
-                saveData(users);
+                await saveData(users);
                 
-                alert(`✓ Le compte de ${prenom} ${nom} a été supprimé avec succès.`);
+                alert(`✓ Compte supprimé`);
                 updateAdminStats();
                 displayAllUsers();
             }
         }
 
-        // Recherche en temps réel
         document.getElementById('searchUsers').addEventListener('input', function(e) {
             displayAllUsers(e.target.value);
         });
